@@ -1,0 +1,125 @@
+// MACHOTE EN C QUE SIRVE, NO INCLUYE BOTON
+
+#include <stdio.h>
+
+unsigned int counter = 0; // Contador
+
+// Patrones posibles para los displays de 7 segmentos, 0-9
+const int patterns[10] = {
+    //Segmentos correspondientes
+//GPIO4210
+    0b0000, // 0
+    0b0001, // 1
+    0b0010, // 2
+    0b0011, // 3
+    0b0100, // 4
+    0b0101, // 5
+    0b0110, // 6
+    0b0111, // 7
+    0b1000, // 8
+    0b1001  // 9
+};
+
+// Funcion que toma el numero aleatorio y guarda su valor de unidades
+int num_unidades(int num) {
+    int unidades = num % 10;
+    return unidades;
+}
+
+// Funcion que toma el numero aleatorio y guarda su valor de decenas
+int num_decenas(int num) {
+    int decenas = num / 10;
+    return decenas;
+}
+
+// Funcion para crear numeros pseudo aleatorios entre 0 y 99
+unsigned int generateRandomNumber() {
+    counter += 0xDEADBEEF;
+    unsigned int random = (counter % 100); // Limitacion del rango entre 0 y 99
+    return random;
+}
+
+// Funcion que toma las unidades, los convierte a binario para 
+// que funcione con los displays
+int binario_u(int unidades, int j) {
+        if (unidades == j) {
+            unidades = patterns[j]; // Toma el valor en binario
+            // printf("%d \n", unidades);
+        }
+        return unidades;
+}
+
+// Funcion que toma las decenas, los convierte a binario para 
+// que funcione con los displays
+int binario_d(int decenas, int j) {
+        if (decenas == j) {
+            decenas = patterns[j]; // Toma el valor en binario
+            // printf("%d \n", decenas);
+        }
+        return decenas;
+}
+
+int main() {
+    int j = 0; // Contador de bolas
+    // Para el circuito implementado se tiene que:
+    // b0 = GP0, b1 = GP1, b2 = GP2, b3 = GP4, GP3 es el boton.
+    unsigned int arreglo[10]; // Arreglo para guardar numeros aleatorios
+    
+    while (j < 1) {
+        for (int i = 0; i < 10; ++i) {
+            arreglo[i] = -1; // Inicializar el arreglo con -1 (porque este numero no puede salir)
+        }
+        
+        int indice = 0;
+        while (indice < 10) {
+            unsigned int num_generado = generateRandomNumber();
+            int duplicado = 0;
+            
+            // Para que no salgan numeros repetidos
+            for (int i = 0; i < 10; ++i) {
+                if (arreglo[i] == num_generado) {
+                    duplicado = 1;
+                    break;
+                }
+            }
+            if (!duplicado) {
+                arreglo[indice] = num_generado;
+                indice++; // En este caso el numero no es duplicado, entonces se agrega
+            }
+        }
+        int unidad = num_unidades(arreglo[j]);
+        int decena = num_decenas(arreglo[j]);
+        //printf("%d%d \n", decena, unidad); // Ver numeros generados
+        int unidades_bin = binario_u(unidad, j);
+        int decenas_bin = binario_d(decena, j);
+        
+        // Separar los valores de las decenas en binario aplicando una mascara
+        int b3d = (decenas_bin >> 3) & 1; // Bit 3 (MSB)
+        int b2d = (decenas_bin >> 2) & 1; // Bit 2
+        int b1d = (decenas_bin >> 1) & 1; // Bit 1
+        int b0d = decenas_bin & 1; // Bit 0 (LSB)
+        printf("%d, %d, %d, %d \n", b3d, b2d, b1d, b0d); // Ver decimales en binaro
+        
+        // Separar los valores de las unidades en binario aplicando una mascara
+        int b3u = (unidades_bin >> 3) & 1; // Bit 3 (MSB)
+        int b2u = (unidades_bin >> 2) & 1; // Bit 2
+        int b1u = (unidades_bin >> 1) & 1; // Bit 1
+        int b0u = unidades_bin & 1; // Bit 0 (LSB)
+        printf("%d, %d, %d, %d \n \n", b3u, b2u, b1u, b0u); // Ver unidades en binaro
+        ++j;
+    }
+    /* Imprimir los valores de las unidades y decimales
+    for (int k = 0; k < 10; ++k) {
+        int unidad = num_unidades(arreglo[k]);
+        int decena = num_decenas(arreglo[k]);
+        printf("%d, %d \n", decenas, unidades);
+    }
+    */
+    
+    /* Imprimir todos los numeros obtenidos
+    for (int k = 0; k < 10; ++k) {
+        printf("%d, ", arreglo[k]);
+    }
+    */
+    return 0;
+}
